@@ -7,8 +7,11 @@
 
 import time
 from snowflake.snowpark import Session
+import toml
+import snowflake.connector
 #import snowflake.snowpark.types as T
 #import snowflake.snowpark.functions as F
+
 
 
 POS_TABLES = ['country', 'franchise', 'location', 'menu', 'truck', 'order_header', 'order_detail']
@@ -66,10 +69,24 @@ def validate_raw_tables(session):
     for tname in CUSTOMER_TABLES:
         print('{}: \n\t{}\n'.format(tname, session.table('RAW_CUSTOMER.{}'.format(tname)).columns))
 
+data = toml.load('../.devcontainer/connections.toml')
+print(data['connections']['default'])
+
+connection_params = {
+        "user" : data['connections']['default']['user'],
+        "password" : data['connections']['default']['password'],
+        "account" : data['connections']['default']['account'],
+        "passcode" : data['connections']['default']['totp_code'],
+        "role" : "HOL_ROLE",
+        "warehouse" : "HOL_WH",
+        "database" : "HOL_DB",
+        "schema" : "ANALYTICS"
+}
 
 # For local debugging
 if __name__ == "__main__":
     # Create a local Snowpark session
-    with Session.builder.getOrCreate() as session:
+    
+    with Session.builder.configs(connection_params).create() as session:
         load_all_raw_tables(session)
 #        validate_raw_tables(session)
